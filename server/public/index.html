@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1621">
+<title>UltraChat — мессенджер</title>
+<link rel="stylesheet" href="/public/app.css?v=5">
+</head>
+<body data-bubble="rounded" data-density="comfortable">
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3H7l-4 3v-7A8.4 8.4 0 0 1 11.5 3h1A8.4 8.4 0 0 1 21 11.5z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+  <symbol id="i-bluetooth" viewBox="0 0 24 24"><path d="m7 7 10 10-5 4V3l5 4L7 17"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-vibrate" viewBox="0 0 24 24"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4 9v6M20 9v6M2 11v2M22 11v2"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h8l-1 8 11-13h-8l1-7z"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.7-3l-.2-.3a2 2 0 0 1 1.7-3H19a2 2 0 0 0 2-2A9 9 0 0 0 12 3z"/><circle cx="7.5" cy="11.5" r=".8"/><circle cx="10" cy="7.5" r=".8"/><circle cx="15" cy="7.5" r=".8"/></symbol>
+  <symbol id="i-wallpaper" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></symbol>
+  <symbol id="i-checks" viewBox="0 0 24 24"><path d="M2 12.5 7 17.5 17 6.5"/><path d="m11 12.5 4.5 5L22 10.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></symbol>
+  <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M14 8a5 5 0 0 1 0 8M17 5a9 9 0 0 1 0 14"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.3 2.9-5.4 6.5-5.4s6.5 2.1 6.5 5.4"/><path d="M16 5.2a3.4 3.4 0 0 1 0 6.6M18 14.9c2.2.6 3.5 2.3 3.5 5.1"/></symbol>
+</svg>
+
+<!-- ==================== Создание аккаунта ==================== -->
+<div id="onboarding" class="onboarding hidden">
+  <div class="onboard-card">
+    <header class="onboard-head">
+      <div class="logo-mark" id="onboard-logo"><svg class="i"><use href="#i-chat"></use></svg></div>
+      <div class="onboard-brand">UltraChat</div>
+      <button class="icon-btn" id="onboard-settings" type="button" aria-label="Оформление" title="Оформление">
+        <svg class="i"><use href="#i-palette"></use></svg>
+      </button>
+    </header>
+    <div class="step-dots" id="step-dots" aria-hidden="true"></div>
+    <div class="signup-stage" id="signup-stage"></div>
+    <div class="signup-error hidden" id="signup-error"></div>
+    <button class="primary-btn" id="signup-next" type="button"></button>
+    <div class="signup-foot"><span>UltraChat</span><span>1.8.3 web</span></div>
+  </div>
+</div>
+
+<!-- ==================== Основное приложение ==================== -->
+<div id="shell" class="shell hidden">
+  <aside class="sidebar">
+    <header class="discover-head">
+      <button class="avatar-hit" id="me-button" type="button" aria-label="Открыть профиль"></button>
+      <div class="discover-title">
+        <h1>UltraChat</h1>
+        <div class="conn-line">
+          <span class="status-dot" id="conn-dot"></span>
+          <span id="conn-text">Подключение к серверу…</span>
+        </div>
+      </div>
+      <button class="icon-btn accent-icon" id="add-contact-btn" type="button" aria-label="Добавить собеседника" title="Добавить собеседника">
+        <svg class="i"><use href="#i-plus"></use></svg>
+      </button>
+      <button class="icon-btn" id="open-settings" type="button" aria-label="Настройки" title="Настройки">
+        <svg class="i"><use href="#i-settings"></use></svg>
+      </button>
+    </header>
+
+    <div class="warning hidden" id="server-warning">
+      <svg class="i"><use href="#i-server"></use></svg>
+      <span>Укажите адрес сервера в настройках — без него чаты не работают.</span>
+    </div>
+
+    <div class="threads-head">
+      <span>Чаты</span>
+      <span id="threads-count"></span>
+    </div>
+    <div class="threads" id="threads"></div>
+
+    <div class="server-banner hidden" id="server-banner">
+      <span class="spinner"></span>
+      <span id="server-banner-text">Подключение к серверу…</span>
+    </div>
+    <div class="sidebar-foot" id="sidebar-foot"></div>
+  </aside>
+
+  <main class="main">
+    <section class="empty-pane" id="empty-view">
+      <div class="empty-badge"><svg class="i"><use href="#i-chat"></use></svg></div>
+      <h2>Выберите чат</h2>
+      <p>Откройте переписку слева или найдите человека по нику.</p>
+      <button class="primary-btn compact-btn" id="empty-add" type="button">
+        <svg class="i"><use href="#i-plus"></use></svg><span>Добавить собеседника</span>
+      </button>
+    </section>
+
+    <section class="view chat-view hidden" id="chat-view">
+      <div class="wallpaper" id="chat-wallpaper" data-wallpaper="default"></div>
+      <div class="chat-inner">
+        <header class="chat-head">
+          <button class="icon-btn" id="chat-back" type="button" aria-label="Назад к чатам">
+            <svg class="i"><use href="#i-back"></use></svg>
+          </button>
+          <span class="chat-avatar" id="chat-avatar"></span>
+          <div class="chat-peer">
+            <div class="chat-title" id="chat-title">Собеседник</div>
+            <div class="chat-status" id="chat-status">
+              <svg class="i"><use href="#i-server"></use></svg>
+              <span id="chat-status-text">Сервер</span>
+            </div>
+          </div>
+          <button class="icon-btn chat-delete-btn" id="chat-delete" type="button" aria-label="Удалить чат" title="Удалить чат">
+            <svg class="i"><use href="#i-trash"></use></svg>
+          </button>
+          <button class="icon-btn" id="chat-settings" type="button" aria-label="Настройки" title="Настройки">
+            <svg class="i"><use href="#i-settings"></use></svg>
+          </button>
+        </header>
+        <div class="chat-banner hidden" id="chat-banner">
+          <svg class="i"><use href="#i-bolt"></use></svg>
+          <span id="chat-banner-text"></span>
+          <button class="banner-close" id="chat-banner-close" type="button" aria-label="Скрыть">
+            <svg class="i"><use href="#i-close"></use></svg>
+          </button>
+        </div>
+        <div class="messages" id="messages"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <button class="round-btn" id="attach-btn" type="button" aria-label="Прикрепить фото" title="Прикрепить фото">
+            <svg class="i"><use href="#i-image"></use></svg>
+          </button>
+          <textarea id="message-input" rows="1" maxlength="4000" placeholder="Сообщение" enterkeyhint="send"></textarea>
+          <button class="send-btn" id="send-btn" type="submit" aria-label="Отправить" title="Отправить">
+            <svg class="i"><use href="#i-send"></use></svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section class="view settings-view hidden" id="settings-view"></section>
+    <section class="view profile-view hidden" id="profile-view"></section>
+  </main>
+</div>
+
+<!-- ==================== Уведомление об обновлении ==================== -->
+<div class="notice-banner hidden" id="notice-banner" role="status">
+  <span class="notice-icon"><svg class="i"><use href="#i-megaphone"></use></svg></span>
+  <div class="notice-copy">
+    <div class="notice-title" id="notice-title"></div>
+    <div class="notice-text" id="notice-text"></div>
+  </div>
+  <a class="notice-action hidden" id="notice-action" href="#" target="_blank" rel="noopener">Обновить</a>
+  <button class="notice-close" id="notice-close" type="button" aria-label="Скрыть уведомление">
+    <svg class="i"><use href="#i-close"></use></svg>
+  </button>
+</div>
+
+<!-- ==================== Скрытый вход администратора ==================== -->
+<div class="modal-layer hidden" id="admin-login">
+  <form class="dialog admin-login-card" id="admin-login-form" autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="admin-login-title">
+    <div class="admin-login-icon"><svg class="i"><use href="#i-shield"></use></svg></div>
+    <h2 id="admin-login-title">Панель управления</h2>
+    <p class="dialog-sub">Доступ только для администратора UltraChat.</p>
+    <label class="field">
+      <svg class="i"><use href="#i-lock"></use></svg>
+      <input id="admin-password" type="password" placeholder="Пароль" autocomplete="current-password" maxlength="128" autofocus>
+    </label>
+    <div class="field-help error hidden" id="admin-login-error"></div>
+    <div class="dialog-actions">
+      <button class="text-btn muted" id="admin-login-close" type="button">Отмена</button>
+      <button class="text-btn danger" id="admin-login-submit" type="submit">Войти</button>
+    </div>
+  </form>
+</div>
+
+<!-- ==================== Панель администратора ==================== -->
+<section class="admin-panel hidden" id="admin-panel" aria-label="Панель администратора">
+  <header class="admin-head">
+    <div class="admin-brand">
+      <span class="admin-brand-icon"><svg class="i"><use href="#i-shield"></use></svg></span>
+      <div>
+        <h1>UltraChat Admin</h1>
+        <p id="admin-subtitle">Управление сервером</p>
+      </div>
+    </div>
+    <div class="admin-head-actions">
+      <button class="admin-btn" type="button" data-action="admin-refresh">
+        <svg class="i"><use href="#i-refresh"></use></svg><span>Обновить</span>
+      </button>
+      <button class="admin-btn danger" type="button" data-action="admin-logout">
+        <svg class="i"><use href="#i-lock"></use></svg><span>Выйти</span>
+      </button>
+      <button class="admin-btn" type="button" data-action="admin-close" aria-label="Закрыть панель">
+        <svg class="i"><use href="#i-close"></use></svg><span>Закрыть</span>
+      </button>
+    </div>
+  </header>
+  <div class="admin-scroll" id="admin-body"></div>
+</section>
+
+<!-- ==================== Поиск собеседника ==================== -->
+<div class="modal-layer hidden" id="add-contact-modal">
+  <div class="dialog contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+    <h2 id="contact-title">Добавить собеседника</h2>
+    <p class="dialog-sub">Введите имя или ник — сервер найдёт совпадения.</p>
+    <label class="field search-field">
+      <svg class="i"><use href="#i-search"></use></svg>
+      <input id="contact-search" type="search" placeholder="Например, Lofer" autocomplete="off" maxlength="48">
+    </label>
+    <div class="contact-results" id="contact-results"></div>
+    <div class="dialog-actions">
+      <button class="text-btn" id="contact-close" type="button">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Диалоги ==================== -->
+<div class="modal-layer hidden" id="dialog-root"></div>
+
+<!-- ==================== Просмотр фото ==================== -->
+<div class="lightbox hidden" id="lightbox">
+  <button class="icon-btn lightbox-close" id="lightbox-close" type="button" aria-label="Закрыть">
+    <svg class="i"><use href="#i-close"></use></svg>
+  </button>
+  <img id="lightbox-img" alt="Фото">
+</div>
+
+<input type="file" id="avatar-file" accept="image/*" class="hidden">
+<input type="file" id="photo-file" accept="image/*" class="hidden">
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/public/app.js?v=6" defer></script>
+</body>
+</html>

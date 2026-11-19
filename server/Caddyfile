@@ -1,0 +1,11 @@
+{$DOMAIN} {
+	encode gzip
+
+	# WebSocket и обычные запросы идут на один и тот же Node-сервер.
+	reverse_proxy ultrachat:8080
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+	}
+}

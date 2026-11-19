@@ -1,0 +1,17 @@
+node_modules/
+data/
+*.log
+.env
+.env.local
+.DS_Store
+Thumbs.db
+
+# Android
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+*.apk.bak
