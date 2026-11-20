@@ -172,6 +172,18 @@
     onboardingStep: 0,
     signup: { nickname: '', avatarId: 'initials', photo: null, creator: false, mode: 'emoji' },
     signupError: '',
+    emailAuth: {
+      open: false,
+      step: 'email',
+      email: '',
+      code: '',
+      busy: false,
+      error: '',
+      ttlMinutes: 10,
+      cooldown: 0,
+      devCode: '',
+      timer: null,
+    },
     settingsReturn: 'empty',
     settingsFromOnboarding: false,
     profileReturn: 'empty',
@@ -718,9 +730,236 @@
     if (sidebar) sidebar.style.display = '';
     renderStepDots();
     renderSignupStage();
-    $('signup-error').textContent = state.signupError;
-    $('signup-error').classList.toggle('hidden', !state.signupError);
+    const emailOpen = state.emailAuth.open === true;
+    $('step-dots').classList.toggle('hidden', emailOpen);
+    $('signup-next').classList.toggle('hidden', emailOpen);
+    $('signup-error').textContent = state.emailAuth.open ? state.emailAuth.error : state.signupError;
+    $('signup-error').classList.toggle('hidden', !(state.emailAuth.open ? state.emailAuth.error : state.signupError));
     updateSignupNext();
+  }
+
+  function clearEmailTimer() {
+    if (state.emailAuth.timer) {
+      clearInterval(state.emailAuth.timer);
+      state.emailAuth.timer = null;
+    }
+  }
+
+  function startEmailCooldown(seconds) {
+    clearEmailTimer();
+    state.emailAuth.cooldown = Math.max(0, Number(seconds) || 0);
+    const tick = () => {
+      const button = $('email-resend');
+      if (state.emailAuth.cooldown <= 0) {
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Отправить код ещё раз';
+        }
+        clearEmailTimer();
+        return;
+      }
+      if (button) {
+        button.disabled = true;
+        button.textContent = `Отправить ещё раз через ${state.emailAuth.cooldown} с`;
+      }
+      state.emailAuth.cooldown -= 1;
+    };
+    tick();
+    state.emailAuth.timer = setInterval(tick, 1000);
+  }
+
+  function emailErrorMessage(code, retryAfter) {
+    switch (code) {
+      case 'invalid_email': return 'Проверьте адрес почты — кажется, там опечатка.';
+      case 'rate_limited': return retryAfter
+        ? `Слишком часто. Попробуйте через ${retryAfter} с.`
+        : 'Слишком часто. Подождите немного.';
+      case 'mail_not_configured': return 'Отправка писем пока не настроена на сервере.';
+      case 'mail_failed': return 'Не удалось отправить письмо. Попробуйте позже.';
+      case 'invalid_code': return 'Неверный код. Проверьте цифры в письме.';
+      case 'code_expired': return 'Код истёк. Запросите новый.';
+      case 'code_not_requested': return 'Сначала запросите код на почту.';
+      case 'too_many_attempts': return 'Слишком много попыток. Запросите новый код.';
+      case 'banned': return 'Доступ заблокирован администратором.';
+      default: return 'Что-то пошло не так. Попробуйте ещё раз.';
+    }
+  }
+
+  function normalizeEmailInput(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function emailIsValid(value) {
+    const email = normalizeEmailInput(value);
+    return email.length >= 6 && email.length <= 254 && /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email);
+  }
+
+  function deviceLabel() {
+    const ua = navigator.userAgent || '';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : 'Браузер';
+    const os = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac OS X/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Устройство';
+    return `${os} · ${browser}`;
+  }
+
+  function openEmailAuth() {
+    state.emailAuth.open = true;
+    state.emailAuth.step = 'email';
+    state.emailAuth.error = '';
+    renderOnboarding();
+    setTimeout(() => {
+      const input = $('email-input');
+      if (input) input.focus();
+    }, 60);
+  }
+
+  function closeEmailAuth() {
+    clearEmailTimer();
+    state.emailAuth.open = false;
+    state.emailAuth.busy = false;
+    state.emailAuth.error = '';
+    renderOnboarding();
+  }
+
+  async function emailRequestCode({ resend = false } = {}) {
+    if (state.emailAuth.busy) return;
+    const base = currentServer();
+    if (!base) {
+      state.emailAuth.error = 'Сначала укажите адрес сервера в настройках.';
+      renderOnboarding();
+      return;
+    }
+    const email = normalizeEmailInput(state.emailAuth.email);
+    if (!emailIsValid(email)) {
+      state.emailAuth.error = 'Введите корректный адрес почты, например name@gmail.com';
+      renderOnboarding();
+      return;
+    }
+    state.emailAuth.email = email;
+    state.emailAuth.busy = true;
+    state.emailAuth.error = '';
+    renderOnboarding();
+    try {
+      const response = await fetch(`${base}/api/auth/request-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({ email, device: deviceLabel() }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || data.ok !== true) {
+        const code = data && data.error ? data.error : `http_${response.status}`;
+        const retryAfter = data && data.retryAfter ? data.retryAfter : 0;
+        state.emailAuth.busy = false;
+        state.emailAuth.error = emailErrorMessage(code, retryAfter);
+        if (retryAfter) startEmailCooldown(retryAfter);
+        renderOnboarding();
+        return;
+      }
+      state.emailAuth.busy = false;
+      state.emailAuth.step = 'code';
+      state.emailAuth.code = '';
+      state.emailAuth.ttlMinutes = Number(data.ttlMinutes) || 10;
+      state.emailAuth.devCode = typeof data.devCode === 'string' ? data.devCode : '';
+      state.emailAuth.error = '';
+      renderOnboarding();
+      startEmailCooldown(resend ? 60 : 60);
+      setTimeout(() => {
+        const input = $('email-code');
+        if (input) input.focus();
+      }, 60);
+    } catch {
+      state.emailAuth.busy = false;
+      state.emailAuth.error = 'Нет связи с сервером. Проверьте интернет.';
+      renderOnboarding();
+    }
+  }
+
+  async function emailVerifyCode() {
+    if (state.emailAuth.busy) return;
+    const base = currentServer();
+    if (!base) return;
+    const email = normalizeEmailInput(state.emailAuth.email);
+    const code = String(state.emailAuth.code || '').replace(/\D/g, '');
+    if (code.length !== 6) {
+      state.emailAuth.error = 'Введите 6 цифр из письма.';
+      renderOnboarding();
+      return;
+    }
+    state.emailAuth.busy = true;
+    state.emailAuth.error = '';
+    renderOnboarding();
+    try {
+      const response = await fetch(`${base}/api/auth/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({ email, code, deviceId: state.deviceId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || data.ok !== true) {
+        const errorCode = data && data.error ? data.error : `http_${response.status}`;
+        state.emailAuth.busy = false;
+        state.emailAuth.error = emailErrorMessage(errorCode);
+        state.emailAuth.code = '';
+        renderOnboarding();
+        return;
+      }
+      state.emailAuth.busy = false;
+      state.emailAuth.open = false;
+      clearEmailTimer();
+      applyRegisterData(data, { photo: null });
+      state.onboardingStep = 0;
+      state.signupError = '';
+      showShell();
+      setScreen('empty');
+      renderThreads();
+      renderSidebarFoot();
+      renderConnectionStatus();
+      connect();
+      toast(data.created ? `Аккаунт создан: ${data.nickname}` : `С возвращением, ${data.nickname}!`);
+    } catch {
+      state.emailAuth.busy = false;
+      state.emailAuth.error = 'Нет связи с сервером. Проверьте интернет.';
+      renderOnboarding();
+    }
+  }
+
+  function renderEmailAuthStage() {
+    const emailOpen = state.emailAuth.open === true;
+    const stage = $('signup-stage');
+    if (!emailOpen) return false;
+    if (state.emailAuth.step === 'code') {
+      stage.innerHTML = `<div class="signup-step email-step">
+        <div class="email-badge">✉</div>
+        <h1 class="display-title">Введите код</h1>
+        <p class="signup-sub">Письмо отправлено на <b>${escapeHtml(state.emailAuth.email)}</b></p>
+        <div class="field email-code-field">
+          <input id="email-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" aria-label="Код из письма" value="${escapeAttr(state.emailAuth.code)}">
+        </div>
+        <button class="primary-btn email-submit" type="button" data-action="email-verify"${state.emailAuth.busy || state.emailAuth.code.replace(/\D/g, '').length !== 6 ? ' disabled' : ''}>
+          ${state.emailAuth.busy ? '<span class="spinner" style="border-color:rgba(255,255,255,.35);border-top-color:currentColor"></span><span>Проверяем…</span>' : `${icon('chat')}<span>Войти в UltraChat</span>`}
+        </button>
+        <button class="link-btn email-resend" id="email-resend" type="button" data-action="email-resend">Отправить код ещё раз</button>
+        <button class="link-btn" type="button" data-action="email-back">← Изменить почту</button>
+        <div class="email-note">Код действует ${state.emailAuth.ttlMinutes} минут. Проверьте папку «Спам», если письма нет через минуту.</div>
+        ${state.emailAuth.devCode ? `<div class="email-note dev">Тестовый режим: ${escapeHtml(state.emailAuth.devCode)}</div>` : ''}
+      </div>`;
+      return true;
+    }
+    stage.innerHTML = `<div class="signup-step email-step">
+      <div class="email-badge">✉</div>
+      <h1 class="display-title">Вход по почте</h1>
+      <p class="signup-sub">Пришлём код — пароль не нужен</p>
+      <div class="field email-field">
+        <input id="email-input" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@gmail.com" aria-label="Электронная почта" value="${escapeAttr(state.emailAuth.email)}">
+      </div>
+      <button class="primary-btn email-submit" type="button" data-action="email-send"${state.emailAuth.busy ? ' disabled' : ''}>
+        ${state.emailAuth.busy ? '<span class="spinner" style="border-color:rgba(255,255,255,.35);border-top-color:currentColor"></span><span>Отправляем…</span>' : '<span>Получить код</span>'}
+      </button>
+      <button class="link-btn" type="button" data-action="email-back">← Вернуться к созданию аккаунта</button>
+      <div class="email-note">Один аккаунт — на всех устройствах. Вход на новом устройстве завершит сеанс на старом.</div>
+    </div>`;
+    return true;
   }
 
   function renderStepDots() {
@@ -740,6 +979,7 @@
   }
 
   function renderSignupStage() {
+    if (renderEmailAuthStage()) return;
     const stage = $('signup-stage');
     if (state.onboardingStep === 0) {
       stage.innerHTML = `<div class="signup-step welcome-step">
@@ -752,6 +992,11 @@
           <div class="feature-line"><span class="feature-tag">Bluetooth</span><span>запасной канал без интернета</span></div>
           <div class="feature-line"><span class="feature-tag">История</span><span>переписка хранится на устройстве</span></div>
         </div>
+        <button class="email-cta" type="button" data-action="email-open">
+          <span class="email-cta-icon">✉</span>
+          <span class="email-cta-text"><b>Войти по почте</b><small>код придёт на e-mail, пароль не нужен</small></span>
+          <span class="email-cta-arrow">→</span>
+        </button>
       </div>`;
       return;
     }
@@ -4060,6 +4305,29 @@
     const action = element.dataset.action || '';
     const value = element.dataset.value || '';
     switch (action) {
+      case 'email-open':
+        openEmailAuth();
+        break;
+      case 'email-back':
+        if (state.emailAuth.step === 'code') {
+          state.emailAuth.step = 'email';
+          state.emailAuth.code = '';
+          state.emailAuth.error = '';
+          clearEmailTimer();
+          renderOnboarding();
+        } else {
+          closeEmailAuth();
+        }
+        break;
+      case 'email-send':
+        emailRequestCode();
+        break;
+      case 'email-resend':
+        emailRequestCode({ resend: true });
+        break;
+      case 'email-verify':
+        emailVerifyCode();
+        break;
       case 'signup-avatar':
         selectSignupAvatar(element.dataset.id);
         break;
@@ -4219,6 +4487,21 @@
     if (!target || !target.id && !target.matches) return;
     if (target.id === 'signup-nickname') {
       updateSignupPraise();
+      return;
+    }
+    if (target.id === 'email-input') {
+      state.emailAuth.email = target.value;
+      state.emailAuth.error = '';
+      return;
+    }
+    if (target.id === 'email-code') {
+      const digits = target.value.replace(/\D/g, '').slice(0, 6);
+      target.value = digits;
+      state.emailAuth.code = digits;
+      state.emailAuth.error = '';
+      const submit = q('[data-action="email-verify"]');
+      if (submit) submit.disabled = digits.length !== 6 || state.emailAuth.busy;
+      if (digits.length === 6 && !state.emailAuth.busy) emailVerifyCode();
       return;
     }
     if (target.id === 'contact-search') {
