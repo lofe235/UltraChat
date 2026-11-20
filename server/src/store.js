@@ -114,6 +114,13 @@ class Store {
     return Object.values(this.db.users).find((u) => u.deviceId === deviceId) || null;
   }
 
+  /** Поиск аккаунта по почте: почта — основной идентификатор входа. */
+  getUserByEmail(email) {
+    const normalized = String(email || '').trim().toLowerCase();
+    if (!normalized) return null;
+    return Object.values(this.db.users).find((u) => u.email === normalized) || null;
+  }
+
   findByToken(token) {
     if (!token) return null;
     const hash = hashToken(token);
@@ -132,13 +139,14 @@ class Store {
     }
   }
 
-  createUser({ deviceId, nickname, avatarId, creator }) {
+  createUser({ deviceId, nickname, avatarId, creator, email }) {
     const id = crypto.randomBytes(9).toString('base64url');
     const token = crypto.randomBytes(32).toString('base64url');
     const ts = Date.now();
     const user = {
       id,
       deviceId,
+      email: String(email || '').trim().toLowerCase(),
       nickname,
       displayName: displayName(nickname, !!creator),
       avatarId,
