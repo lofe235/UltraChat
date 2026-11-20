@@ -7,6 +7,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { WebSocketServer, WebSocket } = require('ws');
 const { Store, displayName, isLoopbackAddress } = require('./store');
+const { createMailer } = require('./mailer');
+const { EmailAuth, normalizeEmail, isValidEmail } = require('./email-auth');
 
 const VERSION = 1;
 const MAX_TEXT = 4000;
@@ -23,6 +25,7 @@ const ADMIN_SESSION_MS = 12 * 60 * 60 * 1000;
 const NOTICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_BAN_REASON = 200;
 const MAX_ADMIN_USERS = 500;
+const MAX_EMAIL_CODE_ATTEMPTS = 5;
 
 function log(...args) {
   console.log(new Date().toISOString(), ...args);
@@ -209,6 +212,21 @@ function createApp(options = {}) {
   );
   const store = new Store(dataDir);
   fs.mkdirSync(mediaDir, { recursive: true });
+  const mailer = options.mailer || createMailer({
+    templatePath: options.emailTemplatePath,
+    siteUrl: options.siteUrl,
+    configPath: options.mailConfigPath || path.join(dataDir, 'mail.json'),
+  });
+  const emailAuth = new EmailAuth({
+    dataDir,
+    mailer,
+    ttlMs: options.authTtlMs,
+    cooldownMs: options.authCooldownMs,
+    maxPerHour: options.authMaxPerHour,
+    maxAttempts: options.authMaxAttempts ?? MAX_EMAIL_CODE_ATTEMPTS,
+    exposeCode: options.exposeCode === true || process.env.AUTH_DEV_MODE === '1',
+    now: options.now,
+  });
   const adminPassword = loadAdminPassword(dataDir);
   /** @type {Map<string, {ip: string, createdAt: number, expiresAt: number}>} */
   const adminSessions = new Map();
@@ -680,6 +698,121 @@ function createApp(options = {}) {
       }
       sendJson(res, 200, { ok: true, removed });
       return;
+    }
+
+    if (pathname === '/api/auth/config' && req.method === 'GET') {
+      return sendJson(res, 200, {
+        ok: true,
+        email: true,
+        delivery: mailer.enabled ? 'smtp' : 'disabled',
+        from: mailer.enabled ? mailer.fromEmail : '',
+        ttlMinutes: mailer.ttlMinutes,
+      });
+    }
+
+    // Вход по коду из почты. Код живёт 10 минут и хранится только хешем.
+    if (pathname === '/api/auth/request-code' && req.method === 'POST') {
+      if (!allowIp(ip, 60)) return sendJson(res, 429, { ok: false, error: 'rate_limited' });
+      const ipBan = store.findBan({ ip });
+      if (ipBan) {
+        return sendJson(res, 403, {
+          ok: false,
+          error: 'banned',
+          message: 'Доступ заблокирован администратором',
+        });
+      }
+      const body = await readJson(req);
+      const email = normalizeEmail(body.email);
+      if (!isValidEmail(email)) {
+        return sendJson(res, 400, { ok: false, error: 'invalid_email' });
+      }
+      const device = String(body.device || body.deviceName || '').trim().slice(0, 120);
+      const result = await emailAuth.requestCode({ email, device });
+      if (!result.ok) {
+        const payload = { ok: false, error: result.error };
+        if (result.retryAfter) payload.retryAfter = result.retryAfter;
+        return sendJson(res, result.status, payload);
+      }
+      return sendJson(res, 200, {
+        ok: true,
+        ttlMinutes: result.ttlMinutes,
+        ...(result.devCode ? { devCode: result.devCode } : {}),
+      });
+    }
+
+    if (pathname === '/api/auth/verify-code' && req.method === 'POST') {
+      if (!allowIp(ip, 60)) return sendJson(res, 429, { ok: false, error: 'rate_limited' });
+      const body = await readJson(req);
+      const email = normalizeEmail(body.email);
+      if (!isValidEmail(email)) {
+        return sendJson(res, 400, { ok: false, error: 'invalid_email' });
+      }
+      const code = String(body.code || '').replace(/\D/g, '').slice(0, 6);
+      if (code.length !== 6) {
+        return sendJson(res, 400, { ok: false, error: 'invalid_code' });
+      }
+      const check = emailAuth.verifyCode({ email, code });
+      if (!check.ok) {
+        return sendJson(res, check.status, {
+          ok: false,
+          error: check.error,
+          ...(check.attemptsLeft != null ? { attemptsLeft: check.attemptsLeft } : {}),
+        });
+      }
+
+      let user = store.getUserByEmail(email);
+      const ban = store.findBan({ deviceId: user && user.deviceId, ip });
+      if (ban) {
+        return sendJson(res, 403, {
+          ok: false,
+          error: 'banned',
+          message: 'Доступ заблокирован администратором',
+          ban: { kind: ban.kind, reason: ban.reason || '' },
+        });
+      }
+
+      let created = false;
+      let token = '';
+      if (user) {
+        // Одна активная сессия: вход на новом устройстве разлогинивает старое.
+        token = store.rotateToken(user);
+      } else {
+        const requestedDevice = String(body.deviceId || '').trim().slice(0, MAX_DEVICE_ID);
+        const deviceTaken = requestedDevice ? store.getUserByDevice(requestedDevice) : null;
+        const deviceId = requestedDevice && !deviceTaken
+          ? requestedDevice
+          : `email-${crypto.randomBytes(8).toString('hex')}`;
+        const local = email.split('@')[0].replace(/[^\p{L}\p{N}_.-]+/gu, '').slice(0, MAX_NICKNAME);
+        const nickname = normalizeNickname(body.nickname || local) || 'Ultra';
+        const avatarId = normalizeAvatar(body.avatarId ?? body.avatar);
+        const result = store.createUser({
+          deviceId,
+          nickname,
+          avatarId,
+          creator: false,
+          email,
+        });
+        user = result.user;
+        token = result.token;
+        created = true;
+      }
+      store.updateUser(user, {
+        email,
+        emailVerifiedAt: Date.now(),
+        lastIp: ip,
+        lastIpAt: Date.now(),
+      });
+      return sendJson(res, 200, {
+        ok: true,
+        created,
+        userId: user.id,
+        token,
+        nickname: user.nickname,
+        displayName: user.displayName,
+        avatarId: user.avatarId,
+        creator: user.creator,
+        email: user.email,
+      });
     }
 
     if (pathname === '/api/register' && req.method === 'POST') {
