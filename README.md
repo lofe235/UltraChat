@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Приватный мессенджер нового поколения</b><br/>
-  Android · Web · Node.js · WebSocket · Self-hosted
+  Android · Web · Node.js · WebSocket
 </p>
 
 <p align="center">
@@ -22,11 +22,11 @@
 
 ## ✨ Что такое UltraChat
 
-**UltraChat** — это полноценный мессенджер, который живёт на **вашем** сервере: Android-приложение на Kotlin + Jetpack Compose, веб-клиент и лёгкий релей на Node.js. Никаких сторонних облаков, рекламы и трекеров — аккаунты, история и медиа лежат в вашей папке `data/`.
+**UltraChat** — это полноценный мессенджер: Android-приложение на Kotlin + Jetpack Compose, веб-клиент и лёгкий релей на Node.js. Основная версия работает на сервере **alwaysdata**, а при желании релей можно поднять на собственном сервере или в Docker — код открыт. Никакой рекламы и трекеров.
 
 - 🌐 **Live-демо:** [ultrachat2026.alwaysdata.net](https://ultrachat2026.alwaysdata.net)
 - 📱 **APK 1.8.3:** [скачать из репозитория](apk/UltraChat-1.8.3.apk) · [прямая ссылка с сервера](https://ultrachat2026.alwaysdata.net/download/UltraChat.apk)
-- ⚡ **25 автотестов** сервера · **0** внешних зависимостей у клиента
+- ⚡ **39 автотестов** сервера · **0** внешних зависимостей у клиента
 
 ## 🚀 Возможности
 
@@ -76,7 +76,9 @@
 
 ## ⚡ Быстрый старт
 
-### Сервер
+Рабочий экземпляр уже доступен на [ultrachat2026.alwaysdata.net](https://ultrachat2026.alwaysdata.net) — ставить ничего не нужно. Ниже — как поднять свой сервер, если хочется независимости.
+
+### Свой сервер
 
 ```bash
 git clone https://github.com/lofe235/UltraChat.git
@@ -126,6 +128,9 @@ cd android
 | Метод | Путь | Назначение |
 |---|---|---|
 | `POST` | `/api/register` | Регистрация устройства (`deviceId`, `nickname`, `avatarId`) |
+| `GET` | `/api/auth/config` | Включена ли отправка писем (`delivery: smtp` / `disabled`) |
+| `POST` | `/api/auth/request-code` | Отправить код входа на почту (`email`) |
+| `POST` | `/api/auth/verify-code` | Проверить код и получить токен (`email`, `code`) |
 | `GET` | `/api/roster?token=` | Список пользователей и онлайн-статусы |
 | `GET` | `/api/search?q=&token=` | Поиск собеседников |
 | `GET` | `/api/history?peer=&token=` | История переписки |
@@ -138,6 +143,31 @@ WebSocket-кадры: `hello`, `chat`, `ack`, `history`, `typing`, `read`, `edit
 
 Админ-API (Bearer-токен после `/api/admin/login`): `/api/admin/state`, `/ban`, `/unban`, `/kick`, `/delete-user`, `/notice`, `/notice/clear`, `/reset`, `/lobby/clear`.
 
+## ✉️ Вход по коду из почты
+
+Пароли не нужны: пользователь вводит почту, получает письмо с кодом из 6 цифр и входит.
+Код живёт **10 минут**, хранится только HMAC-хешем, повторная отправка — не чаще раза
+в минуту (5 писем в час на адрес, 5 попыток ввода).
+
+Письмо — тёмная брендированная карточка с логотипом, кодом по центру, сроком действия
+и информацией об устройстве. Шаблон лежит в [`email/code.html`](email/code.html),
+отправка — через `nodemailer`.
+
+Настройка отправителя (`server/data/mail.json`, в git не попадает):
+
+```json
+{
+  "user": "ultrachat@gmail.com",
+  "pass": "пароль-приложения",
+  "from": "ultrachat@gmail.com",
+  "fromName": "UltraChat"
+}
+```
+
+Для Gmail нужен **App Password** (Google Account → Security → App passwords), обычный
+пароль не подойдёт. Альтернатива — переменные `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`
+или `GMAIL_USER` / `GMAIL_APP_PASSWORD`.
+
 ## ✅ Тесты
 
 ```bash
@@ -145,7 +175,8 @@ cd server
 npm test
 ```
 
-25 тестов: регистрация, presence, доставка, история, медиа, баны, лимиты и админ-панель.
+39 тестов: регистрация, presence, доставка, история, медиа, баны, лимиты, админ-панель,
+вход по почте и шаблон письма.
 
 ## 📁 Структура
 
