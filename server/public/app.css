@@ -323,6 +323,92 @@ img { max-width: 100%; }
 .nickname-field { width: 100%; margin-top: 26px; }
 .praise { margin-top: 12px; min-height: 18px; font-size: 12px; color: var(--text-tertiary); text-align: center; transition: color 0.2s ease; }
 .praise.good { color: var(--accent); }
+
+/* ---------- Вход по почте ---------- */
+.email-cta {
+  width: 100%;
+  max-width: 390px;
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.email-cta:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.email-cta-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--accent-14);
+  color: var(--accent);
+  font-size: 20px;
+}
+.email-cta-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.email-cta-text b { font-size: 14px; font-weight: 650; }
+.email-cta-text small { font-size: 11.5px; color: var(--text-tertiary); }
+.email-cta-arrow { color: var(--accent); font-size: 17px; }
+
+.email-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-bottom: 8px;
+}
+.email-badge {
+  width: 66px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--accent);
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent-14), transparent);
+  border: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.email-field, .email-code-field { width: 100%; max-width: 390px; margin-top: 22px; }
+.email-field input { font-size: 16px; }
+.email-code-field input {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  font-family: ui-monospace, Consolas, monospace;
+  padding-left: 8px;
+}
+.email-submit { width: 100%; max-width: 390px; margin-top: 16px; }
+.email-resend { margin-top: 8px; }
+.email-note {
+  max-width: 360px;
+  margin-top: 14px;
+  font-size: 11.5px;
+  line-height: 17px;
+  color: var(--text-tertiary);
+}
+.email-note.dev {
+  color: var(--accent);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 4px;
+}
 .avatar-step {
   flex: 1;
   display: flex;
