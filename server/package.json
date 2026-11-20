@@ -6,13 +6,14 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test test/server.test.js"
+    "test": "node --test test/server.test.js test/email-auth.test.js test/mailer.test.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "localtunnel": "^2.0.2",
+    "nodemailer": "^6.9.16",
     "ws": "^8.18.0"
   }
 }
