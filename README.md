@@ -41,6 +41,19 @@
 - **Админ-панель** — статистика, бан, кик, удаление аккаунтов и рассылка.
 - **Свой APK** — сервер сам раздаёт актуальную сборку приложения.
 
+## 📦 Все версии
+
+| Версия | APK |
+|---|---|
+| **1.8.3** — актуальная | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.8.3/UltraChat-1.8.3.apk) |
+| 1.8.2 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.8.2/UltraChat-1.8.2.apk) |
+| 1.8.1 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.8.1/UltraChat-1.8.1.apk) |
+| 1.8.0 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.8.0/UltraChat-1.8.0.apk) |
+| 1.7.1 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.7.1/UltraChat-1.7.1.apk) |
+| 1.7.0 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.7.0/UltraChat-1.7.0.apk) |
+| 1.6.0 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.6.0/UltraChat-1.6.0.apk) |
+| 1.5.3 | [скачать](https://github.com/lofe235/UltraChat/releases/download/v1.5.3/UltraChat-1.5.3.apk) |
+
 ## 📸 Скриншоты
 
 <table>
