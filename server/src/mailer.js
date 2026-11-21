@@ -163,6 +163,10 @@ function createMailer(options = {}) {
       : String(pick('SMTP_SECURE', 'secure') || (port === 465 ? '1' : '')) === '1';
     const user = String(pick('SMTP_USER', 'user') || gmailUser).trim();
     const pass = String(pick('SMTP_PASS', 'GMAIL_APP_PASSWORD', 'pass')).replace(/\s+/g, '');
+    const fromName = String(pick('fromName', 'MAIL_FROM_NAME') || 'UltraChat').trim();
+    const fromEmail = String(pick('from', 'MAIL_FROM') || user || '').trim();
+    // relay — локальный SMTP хостинга: без логина и пароля, только хост.
+    const mode = String(pick('mode') || (user && pass ? 'smtp' : host ? 'relay' : '')).trim();
 
     cached = {
       host,
@@ -170,32 +174,39 @@ function createMailer(options = {}) {
       secure,
       user,
       pass,
-      fromName: String(pick('fromName', 'MAIL_FROM_NAME') || 'UltraChat').trim(),
-      fromEmail: String(pick('from', 'MAIL_FROM') || user || '').trim(),
+      mode,
+      fromName,
+      fromEmail,
       replyTo: String(pick('replyTo', 'MAIL_REPLY_TO') || '').trim(),
       siteUrl: String(pick('siteUrl', 'SITE_URL') || DEFAULT_SITE_URL).trim(),
       timeZone: String(pick('timeZone', 'MAIL_TIMEZONE') || 'Europe/Moscow').trim(),
       ttlMinutes: Number(pick('ttlMinutes', 'MAIL_CODE_TTL_MINUTES') || DEFAULT_TTL_MINUTES) || DEFAULT_TTL_MINUTES,
-      enabled: Boolean(host && user && pass),
+      enabled: Boolean(host && fromEmail && ((user && pass) || mode === 'relay')),
     };
     cachedAt = now;
     return cached;
   }
 
   function transport(config) {
-    const key = `${config.host}:${config.port}:${config.user}`;
+    const key = `${config.host}:${config.port}:${config.user}:${config.mode}`;
     if (transporter && transporterKey === key) return transporter;
     // require ленивый: без настроенного SMTP сервер работает как раньше.
     const nodemailer = require('nodemailer');
-    transporter = nodemailer.createTransport({
+    const options = {
       host: config.host,
       port: config.port,
       secure: config.secure,
-      auth: { user: config.user, pass: config.pass },
       connectionTimeout: 15_000,
       greetingTimeout: 15_000,
       socketTimeout: 25_000,
-    });
+    };
+    if (config.user && config.pass) {
+      options.auth = { user: config.user, pass: config.pass };
+    } else {
+      // Релей хостинга не требует авторизации и работает без TLS.
+      options.ignoreTLS = true;
+    }
+    transporter = nodemailer.createTransport(options);
     transporterKey = key;
     return transporter;
   }
