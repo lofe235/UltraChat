@@ -26,7 +26,7 @@
 
 - 🌐 **Live-демо:** [ultrachat2026.alwaysdata.net](https://ultrachat2026.alwaysdata.net)
 - 📱 **APK 1.8.3:** [скачать из репозитория](apk/UltraChat-1.8.3.apk) · [прямая ссылка с сервера](https://ultrachat2026.alwaysdata.net/download/UltraChat.apk)
-- ⚡ **39 автотестов** сервера · **0** внешних зависимостей у клиента
+- ⚡ **40 автотестов** сервера · **0** внешних зависимостей у клиента
 
 ## 🚀 Возможности
 
@@ -166,7 +166,24 @@ WebSocket-кадры: `hello`, `chat`, `ack`, `history`, `typing`, `read`, `edit
 и информацией об устройстве. Шаблон лежит в [`email/code.html`](email/code.html),
 отправка — через `nodemailer`.
 
-Настройка отправителя (`server/data/mail.json`, в git не попадает):
+Настройка отправителя (`server/data/mail.json`, в git не попадает).
+
+**Вариант 1 — SMTP-релей хостинга (на alwaysdata работает из коробки, без регистраций):**
+
+```json
+{
+  "mode": "relay",
+  "host": "smtpout1.paris1.alwaysdata.com",
+  "port": 25,
+  "secure": false,
+  "from": "ultrachat2026@alwaysdata.net",
+  "fromName": "UltraChat"
+}
+```
+
+**Вариант 2 — обычный SMTP** (Gmail, Яндекс, Brevo, свой сервер): нужны `user` и `pass`,
+для Gmail — **App Password** (Google Account → Security → App passwords), обычный пароль
+не подойдёт:
 
 ```json
 {
@@ -177,9 +194,9 @@ WebSocket-кадры: `hello`, `chat`, `ack`, `history`, `typing`, `read`, `edit
 }
 ```
 
-Для Gmail нужен **App Password** (Google Account → Security → App passwords), обычный
-пароль не подойдёт. Альтернатива — переменные `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`
-или `GMAIL_USER` / `GMAIL_APP_PASSWORD`.
+Можно не создавать файл, а задать переменные окружения: `SMTP_HOST`, `SMTP_PORT`,
+`SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (или `GMAIL_USER` / `GMAIL_APP_PASSWORD`).
+Приоритет: аргументы → `data/mail.json` → окружение. Файл перечитывается на лету.
 
 ## ✅ Тесты
 
@@ -188,8 +205,8 @@ cd server
 npm test
 ```
 
-39 тестов: регистрация, presence, доставка, история, медиа, баны, лимиты, админ-панель,
-вход по почте и шаблон письма.
+40 тестов: регистрация, presence, доставка, история, медиа, баны, лимиты, админ-панель,
+вход по почте, шаблон письма и relay-режим отправки.
 
 ## 📁 Структура
 
