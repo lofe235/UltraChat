@@ -24,6 +24,36 @@ test('настройки читаются из data/mail.json', () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+test('relay-режим: только хост и адрес отправителя, без логина', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ultrachat-mailer-relay-'));
+  const configPath = path.join(dir, 'mail.json');
+  fs.writeFileSync(configPath, JSON.stringify({
+    mode: 'relay',
+    host: 'smtpout1.paris1.alwaysdata.com',
+    port: 25,
+    secure: false,
+    from: 'ultrachat2026@alwaysdata.net',
+    fromName: 'UltraChat',
+  }), 'utf8');
+
+  const saved = {};
+  for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'GMAIL_USER', 'GMAIL_APP_PASSWORD', 'MAIL_FROM']) {
+    saved[key] = process.env[key];
+    delete process.env[key];
+  }
+  try {
+    const mailer = createMailer({ configPath });
+    assert.equal(mailer.enabled, true, 'relay считается настроенным');
+    assert.equal(mailer.fromEmail, 'ultrachat2026@alwaysdata.net');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('без настроек отправка выключена, но превью строится', () => {
   const mailer = createMailer({
     configPath: path.join(os.tmpdir(), 'ultrachat-no-such-config.json'),
